@@ -1,0 +1,72 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Parameters" : {
+    "KeyName" : {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the web server",
+      "Type" : "String"
+    },
+    "VpcId" : {
+      "Description" : "Id of an Existing VPC to attach SecurityGroup",
+      "Type" : "String"
+    }
+  },
+  "Mappings" : {
+    "RegionMap" : {
+      "us-east-1" : {"AMI" : "ami-54cf5c3d"},
+      "us-west-1" : {"AMI" : "ami-b63210f3"},
+      "us-west-2" : {"AMI" : "ami-8e27adbe"},
+      "eu-west-1" : {"AMI" : "ami-3c5f5748"},
+      "ap-southeast-1" : {"AMI" : "ami-ba7538e8"},
+      "ap-southeast-2" : {"AMI" : "ami-b6df4e8c"},
+      "ap-northeast-1" : {"AMI" : "ami-5d7dfa5c"},
+      "sa-east-1" : {"AMI" : "ami-89c81394"}
+    }
+  },
+  "Resources" : {
+    "SSHGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VpcId"},
+        "GroupDescription" : "Enable SSH access via port 22",
+        "SecurityGroupIngress" : [{
+          "IpProtocol" : "tcp",
+          "CidrIp" : "0.0.0.0/0",
+          "FromPort" : "22", "ToPort" : "22"
+        }]
+      }
+    },
+    "WebGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VpcId"},
+        "GroupDescription" : "Enable HTTP access via port 80",
+        "SecurityGroupIngress" : [{
+          "IpProtocol" : "tcp",
+          "CidrIp" : "0.0.0.0/0",
+          "FromPort" : "80", "ToPort" : "80"
+        }]
+      }
+    },
+    "WebServer" : {
+      "Type" : "AWS::EC2::Instance",
+      "Properties" : {
+        "ImageId" : {"Fn::FindInMap" : [ "RegionMap", {"Ref" : "AWS::Region"}, "AMI" ]},
+        "InstanceType" : "t1.micro",
+        "KeyName" : {"Ref" : "KeyName"},
+        "SecurityGroupIds" : [
+          {"Ref" : "SSHGroup"},
+          {"Ref" : "WebGroup"}
+        ],
+        "UserData" : {"Fn::Base64" : {"Fn::Join" : ["", [
+          "#!/bin/bash\n",
+          "yum -y update\n",
+          "yum -y install nginx",
+          "sudo service nginx start"
+        ]]}}
+      }
+    }
+  }
+}
+    
+
+          
