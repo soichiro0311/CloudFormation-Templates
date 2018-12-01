@@ -60,7 +60,7 @@
         "UserData" : {"Fn::Base64" : {"Fn::Join" : ["", [
           "#!/bin/bash\n",
           "yum -y update\n",
-          "yum -y install nginx",
+          "yum -y install nginx\n",
           "sudo service nginx start"
         ]]}}
       }
